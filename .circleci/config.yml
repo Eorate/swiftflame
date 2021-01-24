@@ -1,3 +1,5 @@
+---
+
 version: 2.1
 
 orbs:
@@ -12,11 +14,10 @@ jobs:
       - python/install-deps
       - python/save-cache
       - run:
-          command: ./python3 -m unittest
-          name: Test
+          name: Run Tests
+          command: python -m pytest
 
 workflows:
   main:
     jobs:
       - build-and-test
-
