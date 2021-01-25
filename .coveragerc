@@ -1,2 +1,6 @@
 [run]
-    omit = swiftflame/tests/*
+    omit =
+        swiftflame/tests/*
+        semantic_release/*
+        wsgi.py
+        run.py
