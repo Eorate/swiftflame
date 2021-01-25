@@ -14,8 +14,24 @@ jobs:
       - python/install-deps
       - python/save-cache
       - run:
-          name: Run Tests
-          command: python -m pytest
+          name: Setup Code Climate test-reporter
+          command: |
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+            chmod +x ./cc-test-reporter
+            ./cc-test-reporter before-build
+      - run:
+          name: Run tests
+          command: |
+            python -m pytest --cov-report xml --cov-report term --cov .
+      - run:
+          name: Send coverage to Code Climate
+          command: |
+            ./cc-test-reporter after-build --exit-code $?
+
+      - run:
+          name: Send coverage to Codecov
+          command: |
+            bash <(curl -s https://codecov.io/bash) -Z
 
 workflows:
   main:
