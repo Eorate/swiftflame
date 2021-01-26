@@ -4,9 +4,11 @@ version: 2.1
 
 orbs:
   python: circleci/python@0.2.1
+  heroku: circleci/heroku@1.2.4
 
 jobs:
   build-and-test:
+    description: Build and Test
     executor: python/default
     steps:
       - checkout
@@ -33,7 +35,46 @@ jobs:
           command: |
             bash <(curl -s https://codecov.io/bash) -Z
 
+  heroku/deploy-via-git:
+    description: Heroku deploy
+    executor: heroku/default
+    steps:
+      - checkout
+      - heroku/install
+      - heroku/deploy-via-git
+
 workflows:
   main:
     jobs:
       - build-and-test
+      - heroku/deploy-via-git:
+          context:
+            - swiftflame-heroku-staging
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only: develop
+          force: true
+      - heroku/deploy-via-git:
+          context:
+            - swiftflame-heroku-production
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only: main
+          force: true
+          pre-steps:
+            - run:
+                name: Running pre-deploy
+                command: |
+                  sudo apt update
+                  sudo apt install python3-pip
+                  /usr/bin/python3 -m pip install --upgrade pip
+          post-steps:
+            - run:
+                name: Running post-deploy
+                command: |
+                  /usr/bin/python3 -m pip install -r requirements.txt
+                  semantic-release publish
