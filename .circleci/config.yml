@@ -56,6 +56,15 @@ workflows:
             branches:
               only: develop
           force: true
+          pre-steps:
+            - run:
+                name: Running pre-deploy
+                command: |
+                  sudo apt update
+                  sudo apt install python3-pip
+                  /usr/bin/python3 -m pip install --upgrade pip
+                  /usr/bin/python3 -m pip install -r requirements.txt
+                  alembic upgrade head
       - heroku/deploy-via-git:
           context:
             - swiftflame-heroku-production
@@ -72,11 +81,12 @@ workflows:
                   sudo apt update
                   sudo apt install python3-pip
                   /usr/bin/python3 -m pip install --upgrade pip
+                  /usr/bin/python3 -m pip install -r requirements.txt
+                  alembic upgrade head
           post-steps:
             - run:
                 name: Running post-deploy
                 command: |
-                  /usr/bin/python3 -m pip install -r requirements.txt
                   git config user.email "Tharlaw@example.com"
                   git config user.name "Tharlaw"
                   semantic-release publish
