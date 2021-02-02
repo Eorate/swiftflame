@@ -61,6 +61,7 @@ workflows:
                 name: Running pre-deploy
                 command: |
                   sudo apt update
+                  sudo apt upgrade
                   sudo apt install python3-pip
                   /usr/bin/python3 -m pip install --upgrade pip
                   /usr/bin/python3 -m pip install -r requirements.txt
