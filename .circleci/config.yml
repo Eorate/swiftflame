@@ -54,23 +54,13 @@ workflows:
             - build-and-test
           filters:
             branches:
-              only:
-                - develop
-                - /infra*/
+              only: develop
           force: true
-          pre-steps:
-            - run:
-                name: Running pre-deploy
-                command: |
-                  sudo apt update
-                  sudo apt install python3-pip
-                  /usr/bin/python3 -m pip install --upgrade pip
           post-steps:
             - run:
                 name: Running post-deploy
                 command: |
-                  /usr/bin/python3 -m pip install -r requirements.txt
-                  alembic upgrade head
+                  /usr/local/bin/heroku run alembic upgrade head --app $HEROKU_APP_NAME
       - heroku/deploy-via-git:
           context:
             - swiftflame-heroku-production
@@ -91,8 +81,8 @@ workflows:
             - run:
                 name: Running post-deploy
                 command: |
+                  /usr/local/bin/heroku run alembic upgrade head --app $HEROKU_APP_NAME
                   /usr/bin/python3 -m pip install -r requirements.txt
-                  alembic upgrade head
                   git config user.email "Tharlaw@example.com"
                   git config user.name "Tharlaw"
                   semantic-release publish
