@@ -54,16 +54,21 @@ workflows:
             - build-and-test
           filters:
             branches:
-              only: develop
+              only:
+                - develop
+                - /infra*/
           force: true
           pre-steps:
             - run:
                 name: Running pre-deploy
                 command: |
                   sudo apt update
-                  sudo apt upgrade
                   sudo apt install python3-pip
                   /usr/bin/python3 -m pip install --upgrade pip
+          post-steps:
+            - run:
+                name: Running post-deploy
+                command: |
                   /usr/bin/python3 -m pip install -r requirements.txt
                   alembic upgrade head
       - heroku/deploy-via-git:
@@ -82,12 +87,12 @@ workflows:
                   sudo apt update
                   sudo apt install python3-pip
                   /usr/bin/python3 -m pip install --upgrade pip
-                  /usr/bin/python3 -m pip install -r requirements.txt
-                  alembic upgrade head
           post-steps:
             - run:
                 name: Running post-deploy
                 command: |
+                  /usr/bin/python3 -m pip install -r requirements.txt
+                  alembic upgrade head
                   git config user.email "Tharlaw@example.com"
                   git config user.name "Tharlaw"
                   semantic-release publish
