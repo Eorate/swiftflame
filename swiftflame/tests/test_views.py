@@ -65,5 +65,4 @@ class TestCaseEndpoints(unittest.TestCase):
                 },
             ]
         }
-        # self.assertEqual(response.get_data(as_text=True), expected_pets)
         self.assertEqual(response.get_json(), expected_pets)
