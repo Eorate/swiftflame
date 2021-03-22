@@ -7,13 +7,11 @@ from sqlalchemy import create_engine
 
 csrf = CSRFProtect()
 app = Flask(__name__)
-swagger = Swagger(app)
-csrf.init_app(app)
-
-
 app.config.from_object(
     os.environ.get("APP_SETTINGS", default="config.DevelopmentConfig")
 )
+swagger = Swagger(app)
+csrf.init_app(app)
 
 # Create an engine that stores data in the env database
 engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"])

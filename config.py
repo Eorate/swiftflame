@@ -6,6 +6,11 @@ class Config(object):
     TESTING = False
     CSRF_ENABLED = True
     IGNORE_ENDPOINTS = False
+    SWAGGER = {
+        "title": "PetsAPI",
+        "description": "API for pets",
+        "uiversion": 3,
+    }
 
 
 class ProductionConfig(Config):
