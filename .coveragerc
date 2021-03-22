@@ -4,3 +4,6 @@
         semantic_release/*
         wsgi.py
         run.py
+        config.py
+[report]
+    fail_under = 80
