@@ -34,6 +34,7 @@ def ignore_endpoint(func):
 # Schemas
 ##########
 pets_schema = PetSchema(many=True)
+pet_schema = PetSchema()
 
 
 ############
@@ -44,33 +45,47 @@ def index():
     return render_template("index.html")
 
 
-get_pet_details_dict = {
-    "tags": ["pet"],
-    "summary": "Get pets details",
-    "description": "Get an array of all the pets",
-    "operationId": "getPetsDetails",
-    "consumes": [
-        "application/json",
-    ],
-    "produces": [
-        "application/json",
-    ],
-    "responses": {
-        "200": {
-            "description": "A list of pets to be returned",
-            "schema": {"type": "array", "items": PetSchema},
-        }
-    },
-}
-
-
 @app.route("/pets", methods=["GET"])
-@swag_from(get_pet_details_dict)
 @ignore_endpoint
 def pets():
+    """Get pets details
+    Get an array of all the pets
+    ---
+    consumes: ["application/json"]
+    produces: ["application/json"]
+    responses:
+      200:
+        description: A list of pets to be returned
+    """
     pets = db_session.query(Pet).all()
     results = pets_schema.dump(pets)
     return {"pets": results}
+
+
+@app.route("/pet/<int:pet_id>", methods=["GET"])
+@ignore_endpoint
+def pet(pet_id):
+    """Get pet details
+    Get a details for a pet
+    ---
+    parameters:
+    - name: pet_id
+      in: path
+      type: string
+      required: true
+    produces: ["application/json"]
+    responses:
+      200:
+        description: Pet details
+      404:
+        description: Pet does not exist
+    """
+    pet = db_session.query(Pet).filter_by(id=pet_id).first()
+    if pet is None:
+        return page_not_found("Sorry, Pet does not exist.")
+    else:
+        results = pet_schema.dump(pet)
+        return results
 
 
 @app.errorhandler(404)

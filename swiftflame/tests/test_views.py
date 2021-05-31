@@ -66,3 +66,33 @@ class TestCaseEndpoints(unittest.TestCase):
             ]
         }
         self.assertEqual(response.get_json(), expected_pets)
+
+    def test_get_pets_when_none_exist(self):
+        "Test GET /pets on empty database"
+        self.db_session.query(Pet).delete()
+        self.db_session.commit()
+
+        response = self.client.get("/pets")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"pets": []})
+
+    def test_get_pet_given_id(self):
+        """Test GET /pet/id"""
+        response = self.client.get("/pet/{}".format(self.hero.id))
+        self.assertEqual(response.status_code, 200)
+        expected_pet = {
+            "breed": "Rotweiller",
+            "colour_and_identifying_marks": "Black and Brown",
+            "date_of_birth": "2020-08-01",
+            "id": self.hero.id,
+            "name": "Hero",
+            "sex": "M",
+            "species": "Canine",
+        }
+        self.assertEqual(response.get_json(), expected_pet)
+
+    def test_get_pet_given_unknown_pet_id(self):
+        """Test GET /pet/id"""
+        response = self.client.get("/pet/{}".format(0))
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue("Sorry, Pet does not exist" in response.get_data(as_text=True))
