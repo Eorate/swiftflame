@@ -30,8 +30,6 @@ class UserSchema(Schema):
 
     @post_load
     def make_object(self, data, **kwargs):
-        if not data:
-            return None
         return User(
             email=data["email"],
             password=generate_password_hash(data["password"]),

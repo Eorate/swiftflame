@@ -100,6 +100,21 @@ class TestCaseAuthEndpoints(unittest.TestCase):
         self.assertTrue(response.content_type == "application/json")
         self.assertEqual(response.status_code, 401)
 
+        # Missing email and password.
+        response = self.client.post(
+            "/auth/register",
+            data=json.dumps(dict("")),
+            content_type="application/json",
+        )
+        data = json.loads(response.data.decode())
+        self.assertTrue(data["status"] == "fail")
+        self.assertEqual(
+            str(data["message"]),
+            "{'email': ['Email is required.'], 'password': ['Password is required.']}",
+        )
+        self.assertTrue(response.content_type == "application/json")
+        self.assertEqual(response.status_code, 401)
+
     def test_register_an_existing_user_fails(self):
         """Test POST /auth/register
         Attempting to register an existing user should fail.
