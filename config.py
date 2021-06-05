@@ -6,9 +6,12 @@ class Config(object):
     TESTING = False
     CSRF_ENABLED = True
     IGNORE_ENDPOINTS = False
+    TOKEN_EXPIRE_HOURS = 1
+    TOKEN_EXPIRE_MINUTES = 0
+    TOKEN_EXPIRE_SECONDS = 0
     SWAGGER = {
-        "title": "PetsAPI",
-        "description": "API for pets",
+        "title": "PetsRUsAPI",
+        "description": "API for PetsRUs",
         "uiversion": 3,
     }
 
@@ -71,6 +74,11 @@ class TestingConfig(Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = os.environ.get(
         "SQLALCHEMY_TRACK_MODIFICATIONS", default=False
     )
+
+    TESTING = os.environ.get("TESTING", default=True)
+    TOKEN_EXPIRE_HOURS = os.environ.get("TOKEN_EXPIRE_HOURS", default=0)
+    TOKEN_EXPIRE_MINUTES = os.environ.get("TOKEN_EXPIRE_MINUTES", default=0)
+    TOKEN_EXPIRE_SECONDS = os.environ.get("TOKEN_EXPIRE_SECONDS", default=5)
 
     WTF_CSRF_ENABLED = False
     CSRF_ENABLED = False

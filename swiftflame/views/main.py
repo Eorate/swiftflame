@@ -1,11 +1,12 @@
+from datetime import datetime
 from functools import wraps
 
-from flasgger import swag_from
-from flask import render_template
+from flask import jsonify, make_response, render_template, request
 from sqlalchemy.orm import sessionmaker
-from swiftflame.models.models import Base, Pet
+from swiftflame.models.models import Base, Pet, User
 from swiftflame.schemas.schemas import PetSchema
 from swiftflame.swiftflame import app, engine
+from werkzeug.security import generate_password_hash
 
 Base.metadata.bind = engine
 Base.metadata.create_all()
@@ -43,6 +44,45 @@ pet_schema = PetSchema()
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
+
+
+@app.route("/auth/register", methods=["POST"])
+@ignore_endpoint
+def register_user():
+    data = request.get_json()
+    # check if user already exists
+    user = db_session.query(User).filter_by(email=data.get("email")).first()
+
+    if not user:
+        try:
+            user = User(
+                email=data.get("email"),
+                password=generate_password_hash(data.get("password")),
+                registered_on=datetime.utcnow(),
+                admin=False,
+            )
+            db_session.add(user)
+            db_session.commit()
+            # generate the auth token
+            auth_token = user.encode_auth_token(user.id, app.config)
+            response_object = {
+                "status": "success",
+                "message": "Successfully registered.",
+                "auth_token": auth_token,
+            }
+            return make_response(jsonify(response_object)), 201
+        except Exception as exc:
+            response_object = {
+                "status": "fail",
+                "message": "Some error occurred. Please try again.",
+            }
+            return make_response(jsonify(response_object)), 401
+    else:
+        response_object = {
+            "status": "fail",
+            "message": "User already exists. Please Log in.",
+        }
+        return make_response(jsonify(response_object)), 202
 
 
 @app.route("/pets", methods=["GET"])
