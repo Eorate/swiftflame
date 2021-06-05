@@ -1,12 +1,11 @@
-from datetime import datetime
 from functools import wraps
 
 from flask import jsonify, make_response, render_template, request
+from marshmallow import ValidationError
 from sqlalchemy.orm import sessionmaker
 from swiftflame.models.models import Base, Pet, User
-from swiftflame.schemas.schemas import PetSchema
+from swiftflame.schemas.schemas import PetSchema, UserSchema
 from swiftflame.swiftflame import app, engine
-from werkzeug.security import generate_password_hash
 
 Base.metadata.bind = engine
 Base.metadata.create_all()
@@ -36,6 +35,7 @@ def ignore_endpoint(func):
 ##########
 pets_schema = PetSchema(many=True)
 pet_schema = PetSchema()
+user_schema = UserSchema()
 
 
 ############
@@ -80,12 +80,7 @@ def register_user():
 
     if not user:
         try:
-            user = User(
-                email=data.get("email"),
-                password=generate_password_hash(data.get("password")),
-                registered_on=datetime.utcnow(),
-                admin=False,
-            )
+            user = user_schema.load(data)
             db_session.add(user)
             db_session.commit()
             # generate the auth token
@@ -96,10 +91,10 @@ def register_user():
                 "auth_token": auth_token,
             }
             return make_response(jsonify(response_object)), 201
-        except Exception as exc:
+        except ValidationError as err:
             response_object = {
                 "status": "fail",
-                "message": "Some error occurred. Please try again.",
+                "message": err.messages,
             }
             return make_response(jsonify(response_object)), 401
     else:

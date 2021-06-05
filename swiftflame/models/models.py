@@ -55,22 +55,19 @@ class User(Base):
 
         Returns a string
         """
-        try:
-            token_expire_hours = config.get("TOKEN_EXPIRE_HOURS")
-            token_expire_minutes = config.get("TOKEN_EXPIRE_MINUTES")
-            expire = (
-                datetime.utcnow()
-                + timedelta(hours=token_expire_hours, minutes=token_expire_minutes),
-            )
-            if config["TESTING"]:
-                token_expire_seconds = config.get("TOKEN_EXPIRE_SECONDS")
-                expire = datetime.utcnow() + timedelta(seconds=token_expire_seconds)
-            payload = {
-                "exp": expire,
-                "iat": datetime.utcnow(),
-                "sub": self.id,
-                "admin": self.admin,
-            }
-            return jwt.encode(payload, config.get("SECRET_KEY"), algorithm="HS256")
-        except Exception as exc:
-            return exc
+        token_expire_hours = config.get("TOKEN_EXPIRE_HOURS")
+        token_expire_minutes = config.get("TOKEN_EXPIRE_MINUTES")
+        expire = (
+            datetime.utcnow()
+            + timedelta(hours=token_expire_hours, minutes=token_expire_minutes),
+        )
+        if config["TESTING"]:
+            token_expire_seconds = config.get("TOKEN_EXPIRE_SECONDS")
+            expire = datetime.utcnow() + timedelta(seconds=token_expire_seconds)
+        payload = {
+            "exp": expire,
+            "iat": datetime.utcnow(),
+            "sub": self.id,
+            "admin": self.admin,
+        }
+        return jwt.encode(payload, config.get("SECRET_KEY"), algorithm="HS256")

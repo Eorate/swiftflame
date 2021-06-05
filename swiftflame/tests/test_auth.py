@@ -31,7 +31,7 @@ class TestCaseAuthEndpoints(unittest.TestCase):
         """
         response = self.client.post(
             "/auth/register",
-            data=json.dumps(dict(email="scooby@example.com", password="123456")),
+            data=json.dumps(dict(email="scooby@example.com", password="12345678")),
             content_type="application/json",
         )
         data = json.loads(response.data.decode())
@@ -43,8 +43,9 @@ class TestCaseAuthEndpoints(unittest.TestCase):
 
     def test_register_a_new_user_with_missing_data_fails(self):
         """Test POST /auth/register
-        Try to register a user but dont provide a password
+        Try to register a user but dont provide required data
         """
+        # Password not provided
         response = self.client.post(
             "/auth/register",
             data=json.dumps(dict(email="scooby@example.com")),
@@ -52,7 +53,50 @@ class TestCaseAuthEndpoints(unittest.TestCase):
         )
         data = json.loads(response.data.decode())
         self.assertTrue(data["status"] == "fail")
-        self.assertTrue(data["message"] == "Some error occurred. Please try again.")
+        self.assertEqual(
+            str(data["message"]), "{'password': ['Password is required.']}"
+        )
+        self.assertTrue(response.content_type == "application/json")
+        self.assertEqual(response.status_code, 401)
+
+        # Invalid email address
+        response = self.client.post(
+            "/auth/register",
+            data=json.dumps(dict(email="scooby", password="12345678")),
+            content_type="application/json",
+        )
+        data = json.loads(response.data.decode())
+        self.assertTrue(data["status"] == "fail")
+        self.assertEqual(
+            str(data["message"]), "{'email': ['Not a valid email address.']}"
+        )
+        self.assertTrue(response.content_type == "application/json")
+        self.assertEqual(response.status_code, 401)
+
+        # Email not provided
+        response = self.client.post(
+            "/auth/register",
+            data=json.dumps(dict(password="12345678")),
+            content_type="application/json",
+        )
+        data = json.loads(response.data.decode())
+        self.assertTrue(data["status"] == "fail")
+        self.assertEqual(str(data["message"]), "{'email': ['Email is required.']}")
+        self.assertTrue(response.content_type == "application/json")
+        self.assertEqual(response.status_code, 401)
+
+        # Invalid email and incorrect password length
+        response = self.client.post(
+            "/auth/register",
+            data=json.dumps(dict(email="scooby", password="")),
+            content_type="application/json",
+        )
+        data = json.loads(response.data.decode())
+        self.assertTrue(data["status"] == "fail")
+        self.assertEqual(
+            str(data["message"]),
+            "{'email': ['Not a valid email address.'], 'password': ['Shorter than minimum length 8.']}",
+        )
         self.assertTrue(response.content_type == "application/json")
         self.assertEqual(response.status_code, 401)
 
