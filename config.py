@@ -13,6 +13,12 @@ class Config(object):
         "title": "PetsRUsAPI",
         "description": "API for PetsRUs",
         "uiversion": 3,
+        "consumes": [
+            "application/json",
+        ],
+        "produces": [
+            "application/json",
+        ],
     }
 
 

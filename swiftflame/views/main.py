@@ -49,6 +49,31 @@ def index():
 @app.route("/auth/register", methods=["POST"])
 @ignore_endpoint
 def register_user():
+    """Register users
+    Register new users
+    ---
+    parameters:
+      - in: body
+        name: body
+        description: JSON parameters.
+        schema:
+          properties:
+            email:
+              type: string
+              description: email address.
+              example: milo@example.com
+            password:
+              type: string
+              description: Password.
+              example: mysecretpassword
+    responses:
+      201:
+        description: Successfully registered.
+      202:
+        description: User already exists. Please login.
+      401:
+        description: Some error occured. Please try again.
+    """
     data = request.get_json()
     # check if user already exists
     user = db_session.query(User).filter_by(email=data.get("email")).first()
@@ -91,8 +116,6 @@ def pets():
     """Get pets details
     Get an array of all the pets
     ---
-    consumes: ["application/json"]
-    produces: ["application/json"]
     responses:
       200:
         description: A list of pets to be returned
@@ -113,7 +136,6 @@ def pet(pet_id):
       in: path
       type: string
       required: true
-    produces: ["application/json"]
     responses:
       200:
         description: Pet details
