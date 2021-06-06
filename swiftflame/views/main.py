@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from swiftflame.models.models import Base, Pet, User
 from swiftflame.schemas.schemas import PetSchema, UserSchema
 from swiftflame.swiftflame import app, engine
+from werkzeug.security import check_password_hash
 
 Base.metadata.bind = engine
 Base.metadata.create_all()
@@ -103,6 +104,69 @@ def register_user():
             "message": "User already exists. Please Log in.",
         }
         return make_response(jsonify(response_object)), 202
+
+
+@app.route("/auth/login", methods=["POST"])
+@ignore_endpoint
+def login_user():
+    """Login users
+    Login registered users
+    ---
+    parameters:
+      - in: body
+        name: body
+        description: JSON parameters.
+        schema:
+          properties:
+            email:
+              type: string
+              description: email address.
+              example: milo@example.com
+            password:
+              type: string
+              description: Password.
+              example: mysecretpassword
+    responses:
+      200:
+        description: Successfully logged in.
+      404:
+        description: User does not exist or
+          Email/Password provided was incorrect.
+      500:
+        description: Some error occured. Please try again.
+    """
+    post_data = request.get_json()
+    try:
+        post_user = user_schema.load(post_data)
+
+        user = db_session.query(User).filter_by(email=post_user.email).first()
+
+        if user and check_password_hash(user.password, post_data.get("password")):
+            auth_token = user.encode_auth_token(user.id, app.config)
+            response_object = {
+                "status": "success",
+                "message": "Successfully logged in.",
+                "auth_token": auth_token,
+            }
+            return make_response(jsonify(response_object)), 200
+        elif not user:
+            response_object = {
+                "status": "fail",
+                "message": "User does not exist.",
+            }
+            return make_response(jsonify(response_object)), 404
+        else:
+            response_object = {
+                "status": "fail",
+                "message": "Sorry, email or password was incorrect.",
+            }
+            return make_response(jsonify(response_object)), 404
+    except ValidationError as err:
+        response_object = {
+            "status": "fail",
+            "message": err.messages,
+        }
+        return make_response(jsonify(response_object)), 500
 
 
 @app.route("/pets", methods=["GET"])
