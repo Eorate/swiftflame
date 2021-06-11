@@ -1,3 +1,4 @@
+import traceback
 from functools import wraps
 
 import jwt
@@ -41,14 +42,28 @@ def token_required(f):
             token = request.headers["Bearer"]
 
         if not token:
-            return jsonify({"message": "A valid token is missing."})
+            return make_response(jsonify({"message": "A valid token is missing."})), 401
 
         try:
             data = jwt.decode(token, app.config["SECRET_KEY"], algorithms="HS256")
             current_user = db_session.query(User).filter_by(id=data["sub"]).first()
-        except Exception as exc:
-            # TODO: We should log these exceptions. They should not just disappear.
-            return jsonify({"message": "token is invalid"})
+        except jwt.exceptions.InvalidSignatureError as exc:
+            app.logger.error(exc)
+            return (
+                make_response(jsonify({"message": "Signature verification failed."})),
+                401,
+            )
+        except jwt.exceptions.ExpiredSignatureError as exc:
+            # TODO: We need to return the following as per the spec
+            # HTTP/1.1 401 Unauthorized
+            # WWW-Authenticate: Bearer realm="example",
+            #                   error="invalid_token",
+            #                   error_description="The access token expired"
+            app.logger.error(exc)
+            return make_response(jsonify({"message": "Signature has expired."})), 401
+        except jwt.exceptions.InvalidTokenError as exc:
+            app.logger.error(traceback.format_exc())
+            return make_response(jsonify({"message": "Token is invalid."})), 401
         return f(current_user, *args, **kwargs)
 
     return decorator
