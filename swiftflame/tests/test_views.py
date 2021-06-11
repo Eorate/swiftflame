@@ -145,4 +145,7 @@ class TestCaseEndpoints(unittest.TestCase):
             ),
         )
         self.assertEqual(response.status_code, 404)
-        self.assertTrue("Sorry, Pet does not exist" in response.get_data(as_text=True))
+        self.assertEqual(
+            response.get_json(),
+            {"message": "Sorry, Pet does not exist.", "status": "fail"},
+        )

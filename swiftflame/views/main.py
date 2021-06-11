@@ -242,4 +242,8 @@ def pet(current_user, pet_id):
 
 @app.errorhandler(404)
 def page_not_found(error):
-    return render_template("404.html", message=error), 404
+    response_object = {
+        "status": "fail",
+        "message": error,
+    }
+    return make_response(jsonify(response_object)), 404
