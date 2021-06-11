@@ -1,5 +1,6 @@
 from functools import wraps
 
+import jwt
 from flask import jsonify, make_response, render_template, request
 from marshmallow import ValidationError
 from sqlalchemy.orm import sessionmaker
@@ -29,6 +30,28 @@ def ignore_endpoint(func):
             return func(*args, **kwargs)
 
     return wrapper
+
+
+def token_required(f):
+    @wraps(f)
+    def decorator(*args, **kwargs):
+        token = None
+
+        if "Bearer" in request.headers:
+            token = request.headers["Bearer"]
+
+        if not token:
+            return jsonify({"message": "A valid token is missing."})
+
+        try:
+            data = jwt.decode(token, app.config["SECRET_KEY"], algorithms="HS256")
+            current_user = db_session.query(User).filter_by(id=data["sub"]).first()
+        except Exception as exc:
+            # TODO: We should log these exceptions. They should not just disappear.
+            return jsonify({"message": "token is invalid"})
+        return f(current_user, *args, **kwargs)
+
+    return decorator
 
 
 ##########
@@ -171,14 +194,19 @@ def login_user():
 
 @app.route("/pets", methods=["GET"])
 @ignore_endpoint
-def pets():
+@token_required
+def pets(current_user):
     """Get pets details
     Get an array of all the pets
     ---
+    security:
+       - Bearer: []
     responses:
       200:
         description: A list of pets to be returned
     """
+    # You should return the pets that belong to the client.
+    # So now we have to deal with teams or something close to that.
     pets = db_session.query(Pet).all()
     results = pets_schema.dump(pets)
     return {"pets": results}
@@ -186,15 +214,18 @@ def pets():
 
 @app.route("/pet/<int:pet_id>", methods=["GET"])
 @ignore_endpoint
-def pet(pet_id):
+@token_required
+def pet(current_user, pet_id):
     """Get pet details
-    Get a details for a pet
+    Get a details for a given pet
     ---
     parameters:
     - name: pet_id
       in: path
       type: string
       required: true
+    security:
+       - Bearer: []
     responses:
       200:
         description: Pet details

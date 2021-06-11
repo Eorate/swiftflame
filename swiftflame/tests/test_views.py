@@ -1,7 +1,8 @@
+import json
 import unittest
 from datetime import date
 
-from swiftflame.models.models import Pet
+from swiftflame.models.models import Pet, User
 from swiftflame.swiftflame import app
 from swiftflame.views.main import db_session
 
@@ -12,6 +13,7 @@ class TestCaseEndpoints(unittest.TestCase):
         self.client.testing = True
         self.db_session = db_session
         self.db_session.query(Pet).delete()
+        self.db_session.query(User).delete()
         self.db_session.commit()
         self.hero = Pet(
             name="Hero",
@@ -41,7 +43,19 @@ class TestCaseEndpoints(unittest.TestCase):
 
     def test_get_pets(self):
         """Test GET /pets"""
-        response = self.client.get("/pets")
+        response_register = self.client.post(
+            "/auth/register",
+            data=json.dumps(dict(email="scrapy@example.com", password="scrapy123456")),
+            content_type="application/json",
+        )
+        self.assertEqual(response_register.status_code, 201)
+
+        response = self.client.get(
+            "/pets",
+            headers=dict(
+                Bearer=json.loads(response_register.data.decode())["auth_token"]
+            ),
+        )
         self.assertEqual(response.status_code, 200)
         expected_pets = {
             "pets": [
@@ -72,13 +86,37 @@ class TestCaseEndpoints(unittest.TestCase):
         self.db_session.query(Pet).delete()
         self.db_session.commit()
 
-        response = self.client.get("/pets")
+        response_register = self.client.post(
+            "/auth/register",
+            data=json.dumps(dict(email="scrapy@example.com", password="scrapy123456")),
+            content_type="application/json",
+        )
+        self.assertEqual(response_register.status_code, 201)
+
+        response = self.client.get(
+            "/pets",
+            headers=dict(
+                Bearer=json.loads(response_register.data.decode())["auth_token"]
+            ),
+        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json(), {"pets": []})
 
     def test_get_pet_given_id(self):
         """Test GET /pet/id"""
-        response = self.client.get("/pet/{}".format(self.hero.id))
+        response_register = self.client.post(
+            "/auth/register",
+            data=json.dumps(dict(email="scrapy@example.com", password="scrapy123456")),
+            content_type="application/json",
+        )
+        self.assertEqual(response_register.status_code, 201)
+
+        response = self.client.get(
+            "/pet/{}".format(self.hero.id),
+            headers=dict(
+                Bearer=json.loads(response_register.data.decode())["auth_token"]
+            ),
+        )
         self.assertEqual(response.status_code, 200)
         expected_pet = {
             "breed": "Rotweiller",
@@ -93,6 +131,18 @@ class TestCaseEndpoints(unittest.TestCase):
 
     def test_get_pet_given_unknown_pet_id(self):
         """Test GET /pet/id"""
-        response = self.client.get("/pet/{}".format(0))
+        response_register = self.client.post(
+            "/auth/register",
+            data=json.dumps(dict(email="scrapy@example.com", password="scrapy123456")),
+            content_type="application/json",
+        )
+        self.assertEqual(response_register.status_code, 201)
+
+        response = self.client.get(
+            "/pet/{}".format(0),
+            headers=dict(
+                Bearer=json.loads(response_register.data.decode())["auth_token"]
+            ),
+        )
         self.assertEqual(response.status_code, 404)
         self.assertTrue("Sorry, Pet does not exist" in response.get_data(as_text=True))

@@ -2,13 +2,10 @@ import os
 
 
 class Config(object):
-    DEBUG = True
+    DEBUG = False
     TESTING = False
     CSRF_ENABLED = True
     IGNORE_ENDPOINTS = False
-    TOKEN_EXPIRE_HOURS = 1
-    TOKEN_EXPIRE_MINUTES = 0
-    TOKEN_EXPIRE_SECONDS = 0
     SWAGGER = {
         "title": "PetsRUsAPI",
         "description": "API for PetsRUs",
@@ -19,6 +16,9 @@ class Config(object):
         "produces": [
             "application/json",
         ],
+        "securityDefinitions": {
+            "Bearer": {"type": "apiKey", "in": "header", "name": "Bearer"}
+        },
     }
 
 
@@ -42,6 +42,9 @@ class ProductionConfig(Config):
         IGNORE_ENDPOINTS = True
     elif str(IGNORE_ENDPOINTS).lower() in ("n", "no"):
         IGNORE_ENDPOINTS = False
+
+    TOKEN_EXPIRE_HOURS = int(os.environ.get("TOKEN_EXPIRE_HOURS", default=1))
+    TOKEN_EXPIRE_MINUTES = int(os.environ.get("TOKEN_EXPIRE_MINUTES", default=0))
 
 
 class DevelopmentConfig(Config):
@@ -67,6 +70,9 @@ class DevelopmentConfig(Config):
     elif str(IGNORE_ENDPOINTS).lower() in ("n", "no"):
         IGNORE_ENDPOINTS = False
 
+    TOKEN_EXPIRE_HOURS = int(os.environ.get("TOKEN_EXPIRE_HOURS", default=0))
+    TOKEN_EXPIRE_MINUTES = int(os.environ.get("TOKEN_EXPIRE_MINUTES", default=30))
+
 
 class TestingConfig(Config):
     SECRET_KEY = os.environ.get("SECRET_KEY", default=None)
@@ -82,9 +88,11 @@ class TestingConfig(Config):
     )
 
     TESTING = os.environ.get("TESTING", default=True)
-    TOKEN_EXPIRE_HOURS = os.environ.get("TOKEN_EXPIRE_HOURS", default=0)
-    TOKEN_EXPIRE_MINUTES = os.environ.get("TOKEN_EXPIRE_MINUTES", default=0)
-    TOKEN_EXPIRE_SECONDS = os.environ.get("TOKEN_EXPIRE_SECONDS", default=5)
+    DEBUG = os.environ.get("DEBUG", default=True)
+
+    TOKEN_EXPIRE_HOURS = int(os.environ.get("TOKEN_EXPIRE_HOURS", default=0))
+    TOKEN_EXPIRE_MINUTES = int(os.environ.get("TOKEN_EXPIRE_MINUTES", default=30))
+    TOKEN_EXPIRE_SECONDS = int(os.environ.get("TOKEN_EXPIRE_SECONDS", default=5))
 
     WTF_CSRF_ENABLED = False
     CSRF_ENABLED = False
