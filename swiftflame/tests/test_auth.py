@@ -133,3 +133,88 @@ class TestCaseAuthEndpoints(unittest.TestCase):
         self.assertTrue(data["message"] == "User already exists. Please Log in.")
         self.assertTrue(response.content_type == "application/json")
         self.assertEqual(response.status_code, 202)
+
+    def test_login_registered_user(self):
+        """Test POST /auth/login
+        Login a registered user
+        """
+        response = self.client.post(
+            "/auth/register",
+            data=json.dumps(dict(email="crow@example.com", password="12345678")),
+            content_type="application/json",
+        )
+        data = json.loads(response.data.decode())
+        self.assertTrue(data["message"] == "Successfully registered.")
+        self.assertEqual(response.status_code, 201)
+
+        response = self.client.post(
+            "/auth/login",
+            data=json.dumps(dict(email="crow@example.com", password="12345678")),
+            content_type="application/json",
+        )
+        data = json.loads(response.data.decode())
+        self.assertTrue(data["status"] == "success")
+        self.assertEqual(data["message"], "Successfully logged in.")
+        self.assertTrue(data["auth_token"])
+        self.assertTrue(response.content_type == "application/json")
+        self.assertEqual(response.status_code, 200)
+
+    def test_login_registered_user_wrong_password_fails(self):
+        """Test POST /auth/login
+        A registered user attempts to login with the wrong password
+        """
+        response = self.client.post(
+            "/auth/register",
+            data=json.dumps(dict(email="crownie@example.com", password="87654321")),
+            content_type="application/json",
+        )
+        data = json.loads(response.data.decode())
+        self.assertTrue(data["status"] == "success")
+        self.assertEqual(response.status_code, 201)
+
+        response = self.client.post(
+            "/auth/login",
+            data=json.dumps(dict(email="crownie@example.com", password="12345678")),
+            content_type="application/json",
+        )
+        data = json.loads(response.data.decode())
+        self.assertTrue(data["status"] == "fail")
+        self.assertEqual(data["message"], "Sorry, email or password was incorrect.")
+        self.assertTrue(response.content_type == "application/json")
+        self.assertEqual(response.status_code, 404)
+
+    def test_login_registered_user_missing_required_data_fails(self):
+        """Test POST /auth/login
+        Login a registered user with missing required (email/password) data
+        """
+        user = User(email="crownie@example.com", password="87654321")
+        self.db_session.add(user)
+        self.db_session.commit()
+
+        response = self.client.post(
+            "/auth/login",
+            data=json.dumps(dict(email="crownie@example.com")),
+            content_type="application/json",
+        )
+        data = json.loads(response.data.decode())
+        self.assertTrue(data["status"] == "fail")
+        self.assertEqual(
+            str(data["message"]), "{'password': ['Password is required.']}"
+        )
+        self.assertTrue(response.content_type == "application/json")
+        self.assertEqual(response.status_code, 500)
+
+    def test_unregistered_user_login_fails(self):
+        """Test POST /auth/login
+        An unregistered user tries to login.
+        """
+        response = self.client.post(
+            "/auth/login",
+            data=json.dumps(dict(email="hawk@example.com", password="12345678")),
+            content_type="application/json",
+        )
+        data = json.loads(response.data.decode())
+        self.assertTrue(data["status"] == "fail")
+        self.assertEqual(data["message"], "User does not exist.")
+        self.assertTrue(response.content_type == "application/json")
+        self.assertEqual(response.status_code, 404)
