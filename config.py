@@ -91,7 +91,7 @@ class TestingConfig(Config):
     DEBUG = os.environ.get("DEBUG", default=True)
 
     TOKEN_EXPIRE_HOURS = int(os.environ.get("TOKEN_EXPIRE_HOURS", default=0))
-    TOKEN_EXPIRE_MINUTES = int(os.environ.get("TOKEN_EXPIRE_MINUTES", default=30))
+    TOKEN_EXPIRE_MINUTES = int(os.environ.get("TOKEN_EXPIRE_MINUTES", default=0))
     TOKEN_EXPIRE_SECONDS = int(os.environ.get("TOKEN_EXPIRE_SECONDS", default=5))
 
     WTF_CSRF_ENABLED = False
