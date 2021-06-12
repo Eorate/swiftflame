@@ -224,7 +224,7 @@ def pets(current_user):
     # So now we have to deal with teams or something close to that.
     pets = db_session.query(Pet).all()
     results = pets_schema.dump(pets)
-    return {"pets": results}
+    return make_response(jsonify({"pets": results})), 200
 
 
 @app.route("/pet/<int:pet_id>", methods=["GET"])
