@@ -219,6 +219,8 @@ def pets(current_user):
     responses:
       200:
         description: A list of pets to be returned
+      401:
+        description: Invalid Token errors
     """
     # You should return the pets that belong to the client.
     # So now we have to deal with teams or something close to that.
@@ -244,6 +246,8 @@ def pet(current_user, pet_id):
     responses:
       200:
         description: Pet details
+      401:
+        description: Invalid Token errors
       404:
         description: Pet does not exist
     """
