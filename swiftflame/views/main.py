@@ -26,7 +26,7 @@ def ignore_endpoint(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         if app.config["IGNORE_ENDPOINTS"]:
-            return page_not_found("Sorry, resource not available.")
+            return not_found("Sorry, resource not available.")
         else:
             return func(*args, **kwargs)
 
@@ -42,7 +42,9 @@ def token_required(f):
             token = request.headers["Bearer"]
 
         if not token:
-            return make_response(jsonify({"message": "A valid token is missing."})), 401
+            response = {"message": "A valid token is missing."}
+            app.logger.error("response: {}| status_code: {}".format(response, 401))
+            return make_response(jsonify(response)), 401
 
         try:
             data = jwt.decode(token, app.config["SECRET_KEY"], algorithms="HS256")
@@ -129,18 +131,33 @@ def register_user():
                 "message": "Successfully registered.",
                 "auth_token": auth_token,
             }
+            app.logger.info(
+                "message: {}| status: {}| status_code: {}".format(
+                    response_object["message"], response_object["status"], 201
+                )
+            )
             return make_response(jsonify(response_object)), 201
         except ValidationError as err:
             response_object = {
                 "status": "fail",
                 "message": err.messages,
             }
+            app.logger.error(
+                "message: {}| status: {}| status_code: {}".format(
+                    response_object["message"], response_object["status"], 401
+                )
+            )
             return make_response(jsonify(response_object)), 401
     else:
         response_object = {
             "status": "fail",
             "message": "User already exists. Please Log in.",
         }
+        app.logger.error(
+            "message: {}| status: {}| status_code: {}".format(
+                response_object["message"], response_object["status"], 202
+            )
+        )
         return make_response(jsonify(response_object)), 202
 
 
@@ -186,24 +203,44 @@ def login_user():
                 "message": "Successfully logged in.",
                 "auth_token": auth_token,
             }
+            app.logger.info(
+                "message: {}| status: {}| status_code: {}".format(
+                    response_object["message"], response_object["status"], 200
+                )
+            )
             return make_response(jsonify(response_object)), 200
         elif not user:
             response_object = {
                 "status": "fail",
                 "message": "User does not exist.",
             }
+            app.logger.error(
+                "message: {}| status: {}| status_code: {}".format(
+                    response_object["message"], response_object["status"], 404
+                )
+            )
             return make_response(jsonify(response_object)), 404
         else:
             response_object = {
                 "status": "fail",
                 "message": "Sorry, email or password was incorrect.",
             }
+            app.logger.error(
+                "message: {}| status: {}| status_code: {}".format(
+                    response_object["message"], response_object["status"], 404
+                )
+            )
             return make_response(jsonify(response_object)), 404
     except ValidationError as err:
         response_object = {
             "status": "fail",
             "message": err.messages,
         }
+        app.logger.error(
+            "message: {}| status: {}| status_code: {}".format(
+                response_object["message"], response_object["status"], 500
+            )
+        )
         return make_response(jsonify(response_object)), 500
 
 
@@ -253,16 +290,20 @@ def pet(current_user, pet_id):
     """
     pet = db_session.query(Pet).filter_by(id=pet_id).first()
     if pet is None:
-        return page_not_found("Sorry, Pet does not exist.")
+        return not_found("Sorry, Pet does not exist.")
     else:
         results = pet_schema.dump(pet)
         return results
 
 
-@app.errorhandler(404)
-def page_not_found(error):
+def not_found(error):
     response_object = {
         "status": "fail",
         "message": error,
     }
+    app.logger.error(
+        "message: {}| status: {}| status_code: {}".format(
+            response_object["message"], response_object["status"], 404
+        )
+    )
     return make_response(jsonify(response_object)), 404
