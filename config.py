@@ -4,7 +4,6 @@ import os
 class Config(object):
     DEBUG = False
     TESTING = False
-    CSRF_ENABLED = True
     IGNORE_ENDPOINTS = False
     SWAGGER = {
         "title": "PetsRUsAPI",
@@ -94,6 +93,4 @@ class TestingConfig(Config):
     TOKEN_EXPIRE_MINUTES = int(os.environ.get("TOKEN_EXPIRE_MINUTES", default=0))
     TOKEN_EXPIRE_SECONDS = int(os.environ.get("TOKEN_EXPIRE_SECONDS", default=5))
 
-    WTF_CSRF_ENABLED = False
-    CSRF_ENABLED = False
     LOGIN_DISABLED = True

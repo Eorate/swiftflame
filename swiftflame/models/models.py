@@ -57,9 +57,8 @@ class User(Base):
         """
         token_expire_hours = config.get("TOKEN_EXPIRE_HOURS")
         token_expire_minutes = config.get("TOKEN_EXPIRE_MINUTES")
-        expire = (
-            datetime.utcnow()
-            + timedelta(hours=token_expire_hours, minutes=token_expire_minutes),
+        expire = datetime.utcnow() + timedelta(
+            hours=token_expire_hours, minutes=token_expire_minutes
         )
         if config["TESTING"]:
             token_expire_seconds = config.get("TOKEN_EXPIRE_SECONDS")
