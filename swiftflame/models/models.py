@@ -70,3 +70,18 @@ class User(Base):
             "admin": self.admin,
         }
         return jwt.encode(payload, config.get("SECRET_KEY"), algorithm="HS256")
+
+
+class BlacklistToken(Base):
+    __tablename__ = "blacklist_tokens"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    token = Column(String(500), unique=True, nullable=False)
+    blacklisted_on = Column(DateTime, nullable=False)
+
+    def __init__(self, token):
+        self.token = token
+        self.blacklisted_on = datetime.utcnow()
+
+    def __repr__(self):
+        return "<id: token: {}".format(self.token)
