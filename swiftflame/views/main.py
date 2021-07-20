@@ -5,7 +5,7 @@ import jwt
 from flask import jsonify, make_response, render_template, request
 from marshmallow import ValidationError
 from sqlalchemy.orm import sessionmaker
-from swiftflame.models.models import Base, Pet, User
+from swiftflame.models.models import Base, BlacklistToken, Pet, User
 from swiftflame.schemas.schemas import PetSchema, UserSchema
 from swiftflame.swiftflame import app, engine
 from werkzeug.security import check_password_hash
@@ -48,6 +48,16 @@ def token_required(f):
 
         try:
             data = jwt.decode(token, app.config["SECRET_KEY"], algorithms="HS256")
+            is_blacklisted_token = (
+                db_session.query(BlacklistToken).filter_by(token=token).first()
+            )
+            if is_blacklisted_token:
+                return (
+                    make_response(
+                        jsonify({"message": "Token blacklisted. Please log in again."})
+                    ),
+                    401,
+                )
             current_user = db_session.query(User).filter_by(id=data["sub"]).first()
         except jwt.exceptions.InvalidSignatureError as exc:
             app.logger.error(exc)
@@ -242,6 +252,51 @@ def login_user():
             )
         )
         return make_response(jsonify(response_object)), 500
+
+
+@app.route("/auth/logout", methods=["POST"])
+@ignore_endpoint
+@token_required
+def logout_user(current_user):
+    """Logout users
+    ---
+    parameters:
+      - in: body
+        name: body
+        description: JSON parameters.
+        schema:
+          properties:
+            email:
+              type: string
+              description: email address.
+              example: milo@example.com
+            password:
+              type: string
+              description: Password.
+              example: mysecretpassword
+    security:
+       - Bearer: []
+    responses:
+      200:
+        description: Successfully logged out.
+      401:
+        description: Some error occured.
+    """
+    auth_token = request.headers["Bearer"]
+
+    # mark the token as blacklisted
+    blacklist_token = BlacklistToken(token=auth_token)
+    try:
+        db_session.add(blacklist_token)
+        db_session.commit()
+        responseObject = {
+            "status": "success",
+            "message": "Successfully logged out.",
+        }
+        return make_response(jsonify(responseObject)), 200
+    except Exception as e:
+        responseObject = {"status": "fail", "message": e}
+        return make_response(jsonify(responseObject)), 401
 
 
 @app.route("/pets", methods=["GET"])
